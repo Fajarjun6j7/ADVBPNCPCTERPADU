@@ -1,5 +1,5 @@
 // ==========================================
-// FILE: khasanah bca.js
+// FILE: khasanah-bca.js
 // FUNGSI: Logika Utama Modul Khasanah BCA (Terintegrasi RBAC Global, DUAL MODE, & EXCEL DYNAMIC COLUMN)
 // ==========================================
 
@@ -89,7 +89,17 @@ function cekAksesBCA(kodeAkses) {
 function terapkanUIAksesBCA() {
     if (!currentUser) return;
     
-    if (!cekAksesBCA('bca_view') && !cekAksesBCA('bca_input')) {
+    const canView = cekAksesBCA('bca_view');
+    const canInput = cekAksesBCA('bca_input');
+    const canEdit = cekAksesBCA('bca_edit');
+    const canHapus = cekAksesBCA('bca_hapus');
+    const canKroscek = cekAksesBCA('bca_kroscek');
+    const canEod = cekAksesBCA('bca_eod');
+
+    // PERBAIKAN: Beri izin masuk jika memiliki SALAH SATU hak akses BCA
+    const hasAnyBcaAccess = canView || canInput || canEdit || canHapus || canKroscek || canEod;
+
+    if (!hasAnyBcaAccess) {
         if (typeof Swal !== 'undefined') {
             Swal.fire("Ditolak!", "Anda tidak memiliki hak akses melihat Modul BCA.", "error").then(() => window.location.href = '../portal/index.html');
         } else {
@@ -99,17 +109,32 @@ function terapkanUIAksesBCA() {
     }
 
     const divEod = document.getElementById('div-bca-eod');
-    if (divEod) divEod.style.display = cekAksesBCA('bca_eod') ? 'block' : 'none';
+    if (divEod) divEod.style.display = canEod ? 'block' : 'none';
     
     const navKroscek = document.getElementById('btn-kroscek');
-    if (navKroscek) navKroscek.style.display = cekAksesBCA('bca_kroscek') ? 'block' : 'none';
+    if (navKroscek) navKroscek.style.display = canKroscek ? 'block' : 'none';
     
     const navCetak = document.getElementById('btn-bca-cetak-export');
-    if (navCetak) navCetak.style.display = cekAksesBCA('bca_view') ? 'block' : 'none';
+    if (navCetak) navCetak.style.display = canView ? 'block' : 'none';
 
-    const canInput = cekAksesBCA('bca_input');
-    const canEdit = cekAksesBCA('bca_edit');
-    const canHapus = cekAksesBCA('bca_hapus');
+    // PERBAIKAN: Menu input disembunyikan jika tidak punya akses view atau input
+    const navFisik = document.getElementById('btn-fisik-prosesan');
+    const navPending = document.getElementById('btn-pending-sortir');
+    const navPemakaian = document.getElementById('btn-pemakaian-uang');
+    const navSaldo = document.getElementById('btn-saldo-khasanah');
+
+    const canViewOrInput = canView || canInput;
+    
+    if (navFisik) navFisik.style.display = canViewOrInput ? 'block' : 'none';
+    if (navPending) navPending.style.display = canViewOrInput ? 'block' : 'none';
+    if (navPemakaian) navPemakaian.style.display = canViewOrInput ? 'block' : 'none';
+    if (navSaldo) navSaldo.style.display = canViewOrInput ? 'block' : 'none';
+
+    // PERBAIKAN: Jika default tab (Fisik Prosesan) tidak bisa diakses, otomatis alihkan ke Kroscek
+    if (!canViewOrInput && window.currentActiveTabBCA === 'fisik-prosesan') {
+        if (canKroscek) openTabBCA('kroscek');
+        else if (canEod) document.getElementById('page-title-bca').innerText = "Menu Kosong (Hanya EOD)"; 
+    }
 
     const btnAddAction = document.getElementById('btn-action-add');
     if (btnAddAction) btnAddAction.style.display = canInput ? 'inline-block' : 'none';
@@ -125,8 +150,18 @@ function terapkanUIAksesBCA() {
             inp.style.pointerEvents = 'none'; 
             inp.style.background = 'transparent';
         });
+    }
+
+    // PERBAIKAN: Kontrol Upload H1 dipisah khusus menggunakan bca_kroscek, tidak lagi bca_input/edit
+    if (!canKroscek) {
         document.querySelectorAll('input[name^="h1_mode"]').forEach(r => r.disabled = true);
         document.querySelectorAll('.btn-upload-h1').forEach(btn => btn.style.display = 'none');
+    } else {
+        document.querySelectorAll('input[name^="h1_mode"]').forEach(r => r.disabled = false);
+        document.querySelectorAll('.btn-upload-h1').forEach(btn => {
+            btn.style.display = 'inline-block';
+            btn.style.pointerEvents = 'auto';
+        });
     }
 }
 

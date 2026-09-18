@@ -303,61 +303,87 @@ Object.assign(window.app, {
         return AuthHelper.cekAkses(kodeAkses, window.currentRealtimeAkses);
     }, 
 
+    // PERBAIKAN: Fungsi Terapkan Hak Akses
     terapkanUIAkses: function() {
         if (!this.currentUser) return;
         
-        let canView = this.cekValidasiAkses('khasanah_view') || this.cekValidasiAkses('khasanah_input') || this.cekValidasiAkses('khasanah_edit') || this.cekValidasiAkses('khasanah_kroscek');
-        let canInput = this.cekValidasiAkses('khasanah_input') || this.cekValidasiAkses('khasanah_edit');
+        let canView = this.cekValidasiAkses('khasanah_view');
+        let canInput = this.cekValidasiAkses('khasanah_input');
+        let canEdit = this.cekValidasiAkses('khasanah_edit');
+        let canHapus = this.cekValidasiAkses('khasanah_hapus');
         let canKroscek = this.cekValidasiAkses('khasanah_kroscek');
         let canEOD = this.cekValidasiAkses('khasanah_eod');
 
-        if (!canView) {
+        // IZINKAN MASUK SELAMA PUNYA SALAH SATU HAK AKSES
+        let hasAnyAccess = canView || canInput || canEdit || canHapus || canKroscek || canEOD;
+
+        if (!hasAnyAccess) {
             Swal.fire("Akses Ditolak!", "Anda tidak memiliki hak akses untuk Modul Khasanah.", "error").then(() => {
                 window.location.href = '../portal/index.html';
             });
             return;
         }
 
+        let canViewSaldo = canView || canInput || canEdit;
+        let canInputEdit = canInput || canEdit;
+
         // Tampilkan/Sembunyikan Menu berdasarkan Akses
-        document.getElementById('nav-khasanah-input').style.display = canInput ? 'block' : 'none';
-        
+        let navInput = document.getElementById('nav-khasanah-input');
+        let navSaldo = document.getElementById('nav-khasanah-saldo');
         let navKroscek = document.getElementById('nav-khasanah-kroscek');
-        if(navKroscek) navKroscek.style.display = canKroscek ? 'block' : 'none';
+        let navLaporan = document.getElementById('nav-khasanah-laporan');
+        let navEod = document.getElementById('nav-khasanah-eod');
+
+        if (navInput) navInput.style.display = canInputEdit ? 'block' : 'none';
+        if (navSaldo) navSaldo.style.display = canViewSaldo ? 'block' : 'none';
+        if (navKroscek) navKroscek.style.display = canKroscek ? 'block' : 'none';
+        if (navLaporan) navLaporan.style.display = canView ? 'block' : 'none';
+        if (navEod) navEod.style.display = canEOD ? 'block' : 'none';
 
         let divEod = document.getElementById('div-khasanah-eod');
         let divEodStatus = document.getElementById('div-khasanah-eod-status');
-        let navEod = document.getElementById('nav-khasanah-eod');
+        if (divEod) divEod.style.display = canEOD ? 'block' : 'none';
+        if (divEodStatus) divEodStatus.style.display = canEOD ? 'block' : 'none';
 
-        if(divEod) divEod.style.display = canEOD ? 'block' : 'none';
-        if(divEodStatus) divEodStatus.style.display = canEOD ? 'block' : 'none';
-        if(navEod) navEod.style.display = canEOD ? 'block' : 'none';
+        // Cek tab aktif saat ini, arahkan jika user tidak berhak membuka tab default
+        let activeSection = document.querySelector('#khasanah-module .section.active');
+        let activeTabId = activeSection ? activeSection.id : 'tab-khasanah-saldo';
 
-        // Jika Tab Input aktif tapi user hanya VIEW, paksa pindah ke Tab Saldo
-        if (!canInput && document.getElementById('tab-khasanah-input').classList.contains('active')) {
-            this.switchTabKhasanah('tab-khasanah-saldo', document.getElementById('nav-khasanah-saldo'));
+        if (activeTabId === 'tab-khasanah-input' && !canInputEdit) {
+            if (canViewSaldo) this.switchTabKhasanah('tab-khasanah-saldo', navSaldo);
+            else if (canKroscek) this.switchTabKhasanah('tab-khasanah-kroscek', navKroscek);
+            else if (canView) this.switchTabKhasanah('tab-khasanah-laporan', navLaporan);
+        } else if (activeTabId === 'tab-khasanah-saldo' && !canViewSaldo) {
+            if (canKroscek) this.switchTabKhasanah('tab-khasanah-kroscek', navKroscek);
+            else if (canView) this.switchTabKhasanah('tab-khasanah-laporan', navLaporan);
         }
 
-        // Sembunyikan semua tombol aksi Edit/Upload/Kirim bagi user yang cuma VIEW
-        if (!canInput) {
-            document.querySelectorAll('.btnAksiTrans').forEach(el => el.style.display = 'none');
-        }
+        // Sembunyikan semua tombol aksi Edit/Upload Transaksi bagi user tanpa akses
+        document.querySelectorAll('.btnAksiTrans').forEach(el => {
+            el.style.display = canInputEdit ? 'inline-block' : 'none';
+        });
 
-        if (!canKroscek) {
-            let btnKirim = document.getElementById('btnAksiKirimKroscek');
-            if(btnKirim) btnKirim.style.display = 'none';
-            
-            let btnUploadH1 = document.getElementById('btnAksiUploadH1');
-            if(btnUploadH1) btnUploadH1.style.display = 'none';
+        // Kontrol Tombol Kroscek
+        let btnKirim = document.getElementById('btnAksiKirimKroscek');
+        if (btnKirim) btnKirim.style.display = (canInputEdit || canKroscek) ? 'inline-block' : 'none';
 
-            let modeKroscek = document.getElementById('kroscekModeKhasanah');
-            if(modeKroscek) modeKroscek.disabled = true;
+        // PERBAIKAN: Upload Data H+1 dikontrol mutlak oleh hak Kroscek, bukan hak Input
+        let btnUploadH1 = document.getElementById('btnAksiUploadH1');
+        let inputH1 = document.getElementById('uploadExcelH1Khasanah');
+        if (btnUploadH1) btnUploadH1.style.display = canKroscek ? 'inline-block' : 'none';
+        if (inputH1) inputH1.disabled = !canKroscek;
 
-            let btnKirimRevisi = document.getElementById('btnAksiKirimRevisi');
-            if(btnKirimRevisi) btnKirimRevisi.style.display = 'none';
+        let modeKroscek = document.getElementById('kroscekModeKhasanah');
+        if (modeKroscek) modeKroscek.disabled = !canKroscek;
 
-            let btnSelesaiKroscek = document.getElementById('btnAksiSelesaiKroscek');
-            if(btnSelesaiKroscek) btnSelesaiKroscek.style.display = 'none';
-        }
+        let btnKirimRevisi = document.getElementById('btnAksiKirimRevisi');
+        if (btnKirimRevisi) btnKirimRevisi.style.display = canKroscek ? 'inline-block' : 'none';
+
+        let btnSelesaiKroscek = document.getElementById('btnAksiSelesaiKroscek');
+        if (btnSelesaiKroscek) btnSelesaiKroscek.style.display = canKroscek ? 'inline-block' : 'none';
+        
+        document.querySelectorAll('input[id^="input_selisih_"]').forEach(inp => { inp.disabled = !canKroscek; });
+        document.querySelectorAll('select[id^="select_selisih_"]').forEach(sel => { sel.disabled = !canKroscek; });
     },
 
     renderDropdownBank: function() { 
@@ -1038,7 +1064,6 @@ Object.assign(window.app, {
         });
     },
 
-    // PENAMBAHAN: Cek balance saat kroscek selesai ditekan
     selesaiKroscekKhasanah: function() {
         if (!this.cekValidasiAkses('khasanah_kroscek')) return Swal.fire("Akses Ditolak", "Anda tidak memiliki hak menyetujui kroscek (Kroscek).", "error");
 
@@ -1046,7 +1071,6 @@ Object.assign(window.app, {
         const mode = document.getElementById('kroscekModeKhasanah').value;
         if (!bankK) return Swal.fire('Error', 'Pilih bank terlebih dahulu', 'error');
 
-        // LOGIKA PENGECEKAN SELISIH SEBELUM BISA BALANCE
         let hasSelisih = false;
         let bankDb = this.saldoKhasanah[bankK] || [];
 
@@ -1093,7 +1117,6 @@ Object.assign(window.app, {
             );
         }
         
-        // JIKA TIDAK ADA SELISIH (BALANCE) LANJUTKAN:
         Swal.fire({ title: 'Kroscek Selesai (Balance)?', text: "Pastikan fisik uang benar-benar sudah sesuai (BALANCE). Data akan siap untuk proses End of Day (EOD).", icon: 'question', showCancelButton: true, confirmButtonColor: '#10b981', confirmButtonText: 'Ya, Fisik Balance!' }).then((result) => {
             if (result.isConfirmed) {
                 this.kroscekStateKhasanah[bankK] = { status: 'BALANCE', timestamp: Date.now() };
@@ -1159,7 +1182,6 @@ Object.assign(window.app, {
         tbNom.innerHTML += `<tr><td colspan="10" style="font-weight:bold;">GRAND TOTAL NOMINAL</td><td style="font-weight:bold; background:#94a3b8; color:#000;">Rp ${gTotNom.toLocaleString('id-ID')}</td></tr>`;
     },
 
-    // PENAMBAHAN: Format EXCEL diubah total menggunakan objek styling dari xlsx-js-style
     unduhExcelKhasanah: function() {
         if (!this.cekValidasiAkses('khasanah_view')) return Swal.fire("Akses Ditolak", "Anda tidak memiliki izin Cetak/Export.", "error");
 
@@ -1169,48 +1191,23 @@ Object.assign(window.app, {
         let ws = {};
         let range = { s: { c: 0, r: 0 }, e: { c: 11, r: 0 } };
 
-        // Variabel Styling Excel
-        const borderAll = {
-            top: { style: 'thin', color: { rgb: "000000" } },
-            bottom: { style: 'thin', color: { rgb: "000000" } },
-            left: { style: 'thin', color: { rgb: "000000" } },
-            right: { style: 'thin', color: { rgb: "000000" } }
-        };
-
-        const headerStyle = {
-            font: { bold: true, color: { rgb: "FFFFFF" } },
-            fill: { fgColor: { rgb: "4F46E5" } }, // Warna Primer (Biru-Indigo)
-            alignment: { horizontal: "center", vertical: "center" },
-            border: borderAll
-        };
-        const titleStyle = {
-            font: { bold: true, sz: 14, color: { rgb: "1E40AF" } },
-            alignment: { horizontal: "center" }
-        };
+        const borderAll = { top: { style: 'thin', color: { rgb: "000000" } }, bottom: { style: 'thin', color: { rgb: "000000" } }, left: { style: 'thin', color: { rgb: "000000" } }, right: { style: 'thin', color: { rgb: "000000" } } };
+        const headerStyle = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "4F46E5" } }, alignment: { horizontal: "center", vertical: "center" }, border: borderAll };
+        const titleStyle = { font: { bold: true, sz: 14, color: { rgb: "1E40AF" } }, alignment: { horizontal: "center" } };
         const dataStyleCenter = { alignment: { horizontal: "center" }, border: borderAll };
         const dataStyleRight = { alignment: { horizontal: "right" }, border: borderAll };
-        const totalStyle = {
-            font: { bold: true }, 
-            fill: { fgColor: { rgb: "E2E8F0" } }, // Warna Slate-200
-            alignment: { horizontal: "right" }, 
-            border: borderAll
-        };
+        const totalStyle = { font: { bold: true }, fill: { fgColor: { rgb: "E2E8F0" } }, alignment: { horizontal: "right" }, border: borderAll };
 
-        // Fungsi Helper untuk membuat cell
         let cell = (r, c, v, t = "s", s = null) => {
             let cellRef = XLSX.utils.encode_cell({ c, r });
             ws[cellRef] = { v: v, t: t };
             if (s) ws[cellRef].s = s;
-            range.e.c = Math.max(range.e.c, c);
-            range.e.r = Math.max(range.e.r, r);
+            range.e.c = Math.max(range.e.c, c); range.e.r = Math.max(range.e.r, r);
         };
 
-        // ROW 0: Title Laporan
         cell(0, 0, `LAPORAN SALDO FISIK KHASANAH - BANK ${this.bankAktifKhasanah}`, 's', titleStyle);
-        // ROW 1: Tanggal Cetak
         cell(1, 0, `Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 's', { font: { italic: true } });
 
-        // ROW 3: Headers
         let headers = ["DENOM", "EMISI", "GRESS BI", "FIT ATM", "ULE", "UTLE", "MINOR", "MAYOR", "U. LAMA", "UNSORTED", "TOTAL (LBR/KPG)", "TOTAL NOMINAL"];
         let rIdx = 3;
         headers.forEach((h, cIdx) => cell(rIdx, cIdx, h, 's', headerStyle));
@@ -1225,7 +1222,6 @@ Object.assign(window.app, {
             if (rowTot === 0) return;
             grandTot += (rowTot * r.denom);
 
-            // Pemisah Koin jika berhadapan dengan baris koin pertama (opsional, bisa dilewati namun untuk visual dirender sebagai border tebal atau semacamnya)
             if(r.jenis === 'KOIN' && !isKoinPrinted) {
                  cell(rIdx, 0, "--- UANG LOGAM (KOIN) ---", 's', { font: { bold:true, color:{rgb:"92400E"} }, fill: { fgColor: {rgb:"FEF08A"} }, alignment: { horizontal: "center" }, border: borderAll });
                  for(let c=1; c<=11; c++) cell(rIdx, c, "", 's', { border: borderAll, fill: { fgColor: {rgb:"FEF08A"} }});
@@ -1250,23 +1246,17 @@ Object.assign(window.app, {
             rIdx++;
         });
 
-        // ROW: Grand Total
         cell(rIdx, 0, "GRAND TOTAL KESELURUHAN", 's', totalStyle);
         for (let c = 1; c <= 10; c++) cell(rIdx, c, "", 's', totalStyle); 
         cell(rIdx, 11, grandTot, 'n', totalStyle);
 
         ws['!ref'] = XLSX.utils.encode_range(range);
         
-        // Atur Merge Cells (Judul & Teks Total)
         ws['!merges'] = ws['!merges'] || [];
-        ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 11 } }); // Merge Judul
-        ws['!merges'].push({ s: { r: rIdx, c: 0 }, e: { r: rIdx, c: 10 } }); // Merge Grand Total Teks
+        ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 11 } });
+        ws['!merges'].push({ s: { r: rIdx, c: 0 }, e: { r: rIdx, c: 10 } });
 
-        // Auto width kolom
-        ws['!cols'] = [
-            { wch: 15 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
-            { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 20 }, { wch: 25 }
-        ];
+        ws['!cols'] = [ { wch: 15 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 20 }, { wch: 25 } ];
 
         let wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Laporan Khasanah");
