@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistem Terpadu CPC - Khasanah BCA</title>
+    
+    <link rel="stylesheet" href="khasanah bca.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <script src="../shared/firebase-config.js"></script>
+</head>
+<body>
+
+    <div class="mobile-header" id="mobile-header-bca">
+        <div style="font-weight: 600; font-size: 15px;">🏦 Khasanah BCA</div>
+        <button class="hamburger" onclick="document.querySelector('#bca-module .sidebar').classList.toggle('active')" style="background:none; border:none;color:white; font-size:20px;">☰</button>
+    </div>
+    
+    <div id="bca-module" class="module-container" style="display: flex;">
+        <div class="sidebar">
+            <div class="brand" style="padding-bottom: 5px;">🏦 Khasanah BCA</div>
+            
+            <!-- GLOBAL MODE SWITCHER -->
+            <div style="padding: 15px 15px 5px;">
+                <button id="btn-global-utama" class="global-mode-btn active" onclick="switchGlobalMode('utama')">🏦 KHASANAH UTAMA</button>
+                <button id="btn-global-titipan" class="global-mode-btn" onclick="switchGlobalMode('titipan')">📦 KHASANAH TITIPAN</button>
+            </div>
+
+            <div class="nav-divider">Navigasi Utama</div>
+            <a class="nav-link" style="background-color: #1e293b; color: white; margin: 0 15px 10px; border-radius: 6px; text-align: center; padding: 8px;" onclick="window.location.href='../portal/index.html'">⬅️ Kembali ke Portal</a>
+            <div class="nav-divider">Inputan BCA</div>
+            <a class="nav-link active" id="btn-fisik-prosesan" onclick="openTabBCA('fisik-prosesan')">📁 Fisik Prosesan</a>
+            <a class="nav-link" id="btn-pending-sortir" onclick="openTabBCA('pending-sortir')">📁 Pending Unsortir</a>
+            <a class="nav-link" id="btn-pemakaian-uang" onclick="openTabBCA('pemakaian-uang')">📁 Pemakaian Uang</a>
+            <div class="nav-divider">Closing & Laporan</div>
+            <a class="nav-link" id="btn-saldo-khasanah" onclick="openTabBCA('saldo-khasanah')">💰 Saldo Khasanah BCA</a>
+            <a class="nav-link" id="btn-kroscek" onclick="openTabBCA('kroscek')">📊 Kroscek BCA & Excel</a>
+            <a class="nav-link" id="btn-bca-cetak-export" onclick="openTabBCA('cetak-export')">🖨️ Cetak / Export</a>
+            
+            <div id="div-bca-eod">
+                <div class="nav-divider">Proses Akhir Hari (BCA)</div>
+                <div style="padding: 5px 15px 10px;">
+                    <p style="font-size: 10px; color: #64748b; line-height: 1.5; margin:0;">*EOD akan MENGHAPUS SEMUA data BCA hari ini menjadi 0.</p>
+                </div>
+                <a class="nav-link" id="btn-eod-bca" style="background-color: #ef4444; color: white; margin: 0 15px 15px; border-radius: 6px; text-align: center; padding: 8px;" onclick="prosesEODBCA()">🏁 End of Day (EOD) BCA</a>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="top-action-bar">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button class="btn-toggle-sidebar" onclick="document.querySelector('.sidebar').classList.toggle('collapsed'); document.querySelector('.main-content').classList.toggle('expanded');" title="Sembunyikan Menu">☰</button>
+                    <h2 id="page-title-bca">Inputan Fisik Prosesan [UTAMA]</h2>
+                </div>
+                
+                <div class="action-group" id="action-buttons-group">
+                    <button id="btn-action-add" class="btn-action add" onclick="handleActionAdd()">➕ Tambah Area</button>
+                    <button id="btn-action-edit" class="btn-action edit" onclick="handleActionEdit()">✏️ Edit Area</button>
+                    <button id="btn-action-del" class="btn-action del" onclick="handleActionDelete()">❌ Hapus Area</button>
+                </div>
+            </div>
+            <div class="content-card-bca"><div id="tab-container-bca"></div></div>
+        </div>
+    </div>
+
+    <!-- MODAL QUICK INPUT BCA -->
+    <div id="detail-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modal-title">UANG KERTAS</div>
+                <button class="btn-close" onclick="document.getElementById('detail-modal').style.display='none'">×</button>
+            </div>
+            <div class="modal-labels">
+                <div style="width:110px; text-align:center;">LEMBAR/KEP</div>
+                <div style="flex-grow:1; text-align:center;">KONDISI</div>
+                <div style="flex-grow:1; text-align:center;">EMISI</div><div style="width:32px;"></div>
+            </div>
+            <div id="modal-rows-container"></div>
+            <div class="modal-actions" id="modal-action-buttons">
+                <button type="button" class="btn-modal" onclick="addModalRow(window.currentModalDenom)">Tambah</button>
+                <button type="button" class="btn-modal" onclick="saveModal()">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="khasanah bca.js"></script>
+</body>
+</html>

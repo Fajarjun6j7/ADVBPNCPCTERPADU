@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistem Terpadu CPC - Inputer Roster</title>
+    
+    <!-- CSS Global & Modul -->
+    <link rel="stylesheet" href="../shared/global.css">
+    <link rel="stylesheet" href="roster.css">
+    
+    <!-- Library Eksternal (WAJIB untuk fitur Roster) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Firebase, Master Akses & Config -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="../shared/firebase-config.js"></script>
+    <script src="../shared/master-akses.js"></script>
+</head>
+<body>
+
+    <div id="online-status">Memeriksa Database...</div>
+
+    <div id="roster-module" class="module-container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="brand">✨ JadwalShift V8.8</div>
+            <div class="nav-divider">Navigasi Utama</div>
+            <a class="nav-link" style="background-color: #1e293b; color: white; margin: 0 15px 10px; border-radius: 6px; text-align: center; padding: 8px;" onclick="window.location.href='../portal/index.html'">⬅️ Kembali ke Portal</a>
+            
+            <div class="nav-divider" id="div-roster-operasional">Menu Operasional</div>
+            <a class="nav-link active" id="nav-roster-cuti" onclick="app.switchMenuRoster('menu-pengajuan-cuti', this)">📝 Approval Cuti Harian</a>
+            
+            <div class="nav-divider" id="div-roster-global">Jadwal Roster Global</div>
+            <a class="nav-link" id="nav-roster-global-input" onclick="app.bukaInputRoster('all', this)">✏️ Input Roster Global</a>
+            <a class="nav-link" id="nav-roster-global-daftar" onclick="app.bukaDaftarRoster('all', this)">📁 Daftar Roster Tersimpan</a>
+            
+            <div class="nav-divider" id="div-roster-karyawan">Jadwal Roster Karyawan</div>
+            <a class="nav-link" id="nav-roster-umum" onclick="app.bukaDaftarRoster('karyawan', this)">📁 Daftar Roster Umum</a>
+            <a class="nav-link" id="nav-roster-pic" onclick="app.aksesDaftarManajemen(this)">📁 Lihat Roster TL & PIC</a>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            
+            <!-- TOPBAR HEADER -->
+            <div class="card" id="topbar-container" style="display: flex; align-items: center; padding: 12px 20px; margin-bottom: 20px; gap: 15px;">
+                <button class="btn-toggle-sidebar" onclick="document.querySelector('#roster-module .sidebar').classList.toggle('collapsed'); document.querySelector('#roster-module .main-content').classList.toggle('expanded');">☰</button>
+                <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: #1e293b; text-transform: uppercase;">MODUL AKTIF: <span id="topbar-title" style="color: #3b82f6;">APPROVAL CUTI HARIAN</span></h3>
+            </div>
+            
+            <!-- SECTION: APPROVAL CUTI -->
+            <div id="menu-pengajuan-cuti" class="section active">
+                <div class="card">
+                    <h2>📋 Daftar Approval Cuti</h2>
+                    <div class="flex-row" style="margin-bottom: 10px;">
+                        <div class="form-group flex-1">
+                            <label>Bulan</label>
+                            <select id="filterCutiBulan" onchange="app.renderTabelPengajuanCuti()">
+                                <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
+                                <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+                                <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
+                                <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Tahun</label>
+                            <input type="number" id="filterCutiTahun" value="2026" onchange="app.renderTabelPengajuanCuti()">
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead><tr><th>No</th><th>Nama Karyawan</th><th>Tgl Cuti Roster</th><th>Shift Pengganti (Jika Tolak)</th><th>Status</th><th>Aksi</th></tr></thead>
+                            <tbody id="tabelPengajuanCutiBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: INPUT ROSTER -->
+            <div id="menu-input-roster" class="section">
+                <div class="card" id="form-buat-roster">
+                    <h2 id="judul-form-roster">✏️ Form Set-Up Roster</h2>
+                    <p style="font-size: 12px; color: #64748b; margin-top: -10px; margin-bottom: 15px;">Pilih periode, lalu klik <b>Buka Tabel</b> untuk masuk ke Mode Workspace Layar Penuh.</p>
+                    
+                    <div class="flex-row" style="margin-bottom: 10px;">
+                        <div class="form-group flex-1">
+                            <label>Bulan Roster</label>
+                            <select id="rosterBulan">
+                                <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
+                                <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+                                <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
+                                <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Tahun Roster</label>
+                            <input type="number" id="rosterTahun" value="2026">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>+ Hari Sblm</label>
+                            <input type="number" id="rosterEkstraHariSebelum" value="0" min="0" max="15" placeholder="Sblm: 3">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>+ Hari Ssdh</label>
+                            <input type="number" id="rosterEkstraHari" value="0" min="0" max="31" placeholder="Ssdh: 10">
+                        </div>
+                        <div class="form-group" id="containerBtnBuatTabel" style="width:auto;">
+                            <button class="btn-primary" id="btnBuatTabel" style="width:auto;" onclick="app.loadTabelRoster()">🔄 BUKA TABEL</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AREA WORKSPACE TABEL ROSTER (FULLSCREEN MODE) -->
+                <div id="areaTabelRoster" style="display: none;">
+                    
+                    <!-- TOP BAR WORKSPACE (TETAP MENGAPUNG) -->
+                    <div id="fullscreen-actions" style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px 15px; border-bottom: 2px solid #cbd5e1; position: sticky; top: 0; z-index: 102; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                        <div style="display:flex; align-items:center; gap: 12px;">
+                            <button class="btn-danger" style="width: auto; padding: 6px 12px; font-weight: bold;" onclick="app.toggleFullscreen(false)">⬅️ KEMBALI</button>
+                            <div>
+                                <h3 style="margin:0; font-size:15px; color:#1e293b; font-weight: 800;" id="fs-title">📝 WORKSPACE ROSTER</h3>
+                                <p style="margin:0; font-size:11px; color:#64748b;">(Status Non-Aktif/Resign membaca otomatis dari Data Pusat)</p>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                            <div style="display:flex; gap: 4px; margin-right: 15px; border-right: 2px solid #cbd5e1; padding-right: 15px;">
+                                <button class="btn-warning" id="btnToggleEkstra" style="background-color: #f59e0b; font-size: 11px; width:auto; padding: 6px 12px; font-weight:bold; color:white;" onclick="app.toggleEkstraHari()">👁️ Sembunyikan Ekstra</button>
+                            </div>
+                            <div style="display:flex; gap: 4px; margin-right: 15px; border-right: 2px solid #cbd5e1; padding-right: 15px;">
+                                <button class="btn-info" id="btnViewApp" style="background-color: #0ea5e9; font-size: 11px; width:auto; padding: 6px 12px;" onclick="app.ubahViewMode('app')">📱 View Kode App</button>
+                                <button class="btn-info" id="btnViewExcel" style="background-color: #64748b; font-size: 11px; width:auto; padding: 6px 12px;" onclick="app.ubahViewMode('excel')">📊 View Kode Excel</button>
+                            </div>
+                            
+                            <button class="btn-info" style="width: auto; background-color: #059669; font-size: 11px; padding: 6px 10px;" onclick="app.unduhExcelRoster()">📊 Unduh Excel</button>
+                            <button class="btn-primary" style="width: auto; background-color: #3b82f6; font-size: 11px; padding: 6px 10px;" onclick="app.unduhJpgRoster()">🖼️ Unduh JPG</button>
+                            
+                            <!-- DIBUNGKUS DENGAN ID UNTUK KONTROL RBAC -->
+                            <button id="btnUploadRosterWrapper" class="btn-warning" style="width: auto; cursor:pointer; font-size: 11px; padding: 6px 10px; color:#fff;" onclick="document.getElementById('uploadExcelRoster').click()">✨ Upload Excel
+                                <input type="file" id="uploadExcelRoster" accept=".xlsx, .xls, .csv" style="display: none;" onchange="app.prosesUploadRoster(event)">
+                            </button>
+                            
+                            <button class="btn-success" style="width: auto; font-size: 12px; padding: 6px 18px; font-weight:bold; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);" onclick="app.prosesSimpanDenganOtorisasi()" id="btnSaveRoster">💾 SIMPAN ONLINE</button>
+                        </div>
+                    </div>
+
+                    <!-- TABEL ROSTER -->
+                    <div class="card" style="padding:0; border:none; box-shadow:none; margin-top: 10px;">
+                        <div class="table-wrapper" style="max-height: calc(100vh - 100px);">
+                            <table id="tabelInputRoster">
+                                <thead><tr id="headerRoster"></tr></thead>
+                                <tbody id="bodyRoster"></tbody>
+                                <tfoot id="footerRoster" style="background: #f1f5f9; font-weight: bold;"></tfoot>
+                            </table>
+                        </div>
+                        <div id="keteranganLiburNasional" style="margin-top: 15px; padding: 10px 15px; background: #fee2e2; border-left: 3px solid #ef4444; border-radius: 6px; display: none;">
+                            <h4 style="color: #b91c1c; margin-bottom: 5px; font-size: 12px;">📌 Hari Libur Nasional:</h4>
+                            <ul id="listLiburNasional" style="margin-left: 20px; font-size: 11px; color: #7f1d1d;"></ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- SECTION: DAFTAR ROSTER -->
+            <div id="menu-daftar-roster" class="section">
+                <div class="card">
+                    <h2 id="judul-daftar-roster">📁 Daftar Roster Tersimpan</h2>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead><tr><th style="width: 40px;">No</th><th>Bulan</th><th>Tahun</th><th>Hari Ekstra</th><th>Karyawan (Divisi Ini)</th><th>Aksi</th></tr></thead>
+                            <tbody id="tabelDaftarRoster"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="roster.js"></script>
+</body>
+</html>

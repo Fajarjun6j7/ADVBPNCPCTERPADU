@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistem Terpadu CPC - Khasanah Utama</title>
+    <link rel="stylesheet" href="khasanah utama.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- WAJIB: Memanggil AuthHelper, Master Akses, dan Config Firebase -->
+    <script src="../shared/firebase-config.js"></script>
+    <script src="../shared/master-akses.js"></script>
+</head>
+<body>
+    <div class="mobile-header" id="mobile-header-khasanah">
+        <div style="font-weight: 600; font-size: 15px;">🏦 Saldo Emisi</div>
+        <button class="hamburger" onclick="document.querySelector('#khasanah-module .sidebar').classList.toggle('active')" style="background:none; border:none; color:white; font-size:20px;">☰</button>
+    </div>
+    
+    <div id="khasanah-module" class="module-container" style="display: flex;">
+        <div class="sidebar">
+            <div class="brand-container" style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px 12px; margin-bottom: 8px; border-bottom: 1px solid #1e293b;">
+                <div class="brand" style="border: none; padding-bottom: 0; margin-bottom: 0;">🏦 Saldo Emisi v3.5</div>
+                <button class="btn-close-nav" onclick="document.querySelector('.sidebar').classList.remove('active')">☰</button>
+            </div>
+
+            <div class="nav-divider">Navigasi Utama</div>
+            <a class="nav-link" style="background-color: #1e293b; color: white; margin: 0 15px 10px; border-radius: 6px; text-align: center; padding: 8px;" onclick="window.location.href='../portal/index.html'">⬅️ Kembali ke Portal</a>
+            <div class="bank-selector" style="padding: 0 15px 15px; border-bottom: 1px solid #1e293b; margin-bottom: 15px;">
+                <label style="color: #94a3b8; font-size: 11px; font-weight: 600; display: block; margin-bottom: 5px;">PILIH BANK KLIEN</label>
+                <select id="pilihBankKhasanah" onchange="app.gantiBankKhasanah()" style="width: 100%; padding: 8px; border-radius: 6px; background: white; color: var(--dark); font-weight: bold; border: none; outline: none; cursor: pointer;">
+                    <option value="">-- Menunggu Data Pusat --</option>
+                </select>
+            </div>
+            
+            <a class="nav-link" id="nav-khasanah-input" onclick="app.switchTabKhasanah('tab-khasanah-input', this)">📝 Transaksi (In/Out)</a>
+            <a class="nav-link active" id="nav-khasanah-saldo" onclick="app.switchTabKhasanah('tab-khasanah-saldo', this)">📊 Saldo Khasanah</a>
+            <a class="nav-link" id="nav-khasanah-kroscek" onclick="app.switchTabKhasanah('tab-khasanah-kroscek', this)">✅ Antrean Kroscek</a>
+            <a class="nav-link" id="nav-khasanah-laporan" onclick="app.switchTabKhasanah('tab-khasanah-laporan', this)">🖨️ Cetak / Export</a>
+            
+            <div class="nav-divider" id="div-khasanah-eod">Proses Akhir Hari</div>
+            <div style="padding: 10px 15px;" id="div-khasanah-eod-status">
+                <p style="font-size: 10px; color: #64748b; line-height: 1.5;">*Jalankan EOD untuk menyimpan permanen.</p>
+                <div id="listBankEOD" style="margin-top: 8px; font-size: 11px; font-weight:bold; color: #10b981;"></div>
+            </div>
+            <a class="nav-link" id="nav-khasanah-eod" style="background-color: #ef4444; color: white; margin: 0 15px; border-radius: 6px; text-align: center; padding: 8px;" onclick="app.prosesEODKhasanah()">🏁 End of Day (EOD)</a>
+        </div>
+        
+        <div class="main-content">
+            <div class="sticky-top-bar" style="position: sticky; top: 10px; background: white; padding: 12px 20px; margin-bottom: 20px; z-index: 90; display: flex; align-items: center; gap: 15px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+                <button class="btn-toggle-sidebar" id="btnToggleSidebarDesktop" onclick="document.querySelector('.sidebar').classList.toggle('collapsed'); document.querySelector('.main-content').classList.toggle('expanded');">☰</button>
+                <h1 style="font-size: 18px; color: var(--dark); margin: 0; font-weight: 800; text-transform: uppercase;">Bank Aktif: <span id="labelBankAktifKhasanah" style="color: var(--primary);">BRI</span></h1>
+            </div>
+            
+            <!-- 1. TAB TRANSAKSI -->
+            <div id="tab-khasanah-input" class="section">
+                <div class="card" style="border-top: 3px solid var(--secondary); background: #f8fafc; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h2 style="margin:0; border:none; padding:0; font-size: 15px;">📥 Import Saldo Pindahan (Upload Excel)</h2>
+                            <p style="font-size: 11px; color: #64748b; margin-top: 5px;">Data otomatis terpisah masuk ke bank <b id="lblBankUploadKhasanah" style="color:var(--primary);">BRI</b>.</p>
+                        </div>
+                        <div>
+                            <button class="btn-success btnAksiTrans" style="padding: 10px 20px;" onclick="document.getElementById('uploadExcelSaldoKhasanah').click()">📁 PILIH FILE EXCEL</button>
+                            <input type="file" id="uploadExcelSaldoKhasanah" accept=".xlsx, .xls, .csv" style="display: none;" onchange="app.prosesUploadSaldoKhasanah(event)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-input-grid">
+                    <div class="qi-section">
+                        <h3>UANG KERTAS</h3>
+                        <div class="qi-row"><div class="qi-badge" style="background: #ef4444;">100K</div><button class="btn-detail btnAksiTrans" onclick="bukaModalUtama(100000, 'KERTAS')">Isi Detail</button><div class="qi-val" id="val-kertas-100000">0 Lembar</div></div>
+                        <div class="qi-row"><div class="qi-badge" style="background: #8b5cf6;">75K</div><button class="btn-detail btnAksiTrans" onclick="bukaModalUtama(75000, 'KERTAS')">Isi Detail</button><div class="qi-val" id="val-kertas-75000">0 Lembar</div></div>
+                        <div class="qi-row"><div class="qi-badge" style="background: #3b82f6;">50K</div><button class="btn-detail btnAksiTrans" onclick="bukaModalUtama(50000, 'KERTAS')">Isi Detail</button><div class="qi-val" id="val-kertas-50000">0 Lembar</div></div>
+                        <div class="qi-row"><div class="qi-badge" style="background: #10b981;">20K</div><button class="btn-detail btnAksiTrans" onclick="bukaModalUtama(20000, 'KERTAS')">Isi Detail</button><div class="qi-val" id="val-kertas-20000">0 Lembar</div></div>
+                        <div class="qi-row"><div class="qi-badge" style="background: #ef4444;">10K</div><button class="btn-detail btnAksiTrans" onclick="bukaModalUtama(10000, 'KERTAS')">Isi Detail</button><div class="qi-val" id="val-kertas-10000">0 Lembar</div></div>
+                        <div class="qi-row"><div class="qi-badge" style="background: #f59e0b;">5K</div><button class="btn-detail btnAksiTrans" onclick="bukaModalUtama(5000, 'KERTAS')">Isi Detail</button><div class="qi-val" id="val-kertas-5000">0 Lembar</div></div>
+                        <div class="qi-row"><div class="qi-badge" style="background: #475569;">2K</div><button class="btn-detail btnAksiTrans" onclick="bukaModalUtama(2000, 'KERTAS')">Isi Detail</button><div class="qi-val" id="val-kertas-2000">0 Lembar</div></div>
+                        <div class="qi-row"><div class="qi-badge" style="background: #84cc16;">1K</div><button class="btn-detail btnAksiTrans" onclick="bukaModalUtama(1000, 'KERTAS')">Isi Detail</button><div class="qi-val" id="val-kertas-1000">0 Lembar</div></div>
+                    </div>
+
+                    <div class="qi-section">
+                        <h3>UANG KOIN</h3>
+                        <div class="qi-row"><div class="qi-badge" style="background: #84cc16;">1000</div><button class="btn-detail btnAksiTrans" onclick="bukaModalUtama(1000, 'KOIN')">Isi Detail</button><div class="qi-val" id="val-koin-1000">0 Keping</div></div>
+                        <div class="qi-row"><div class="qi-badge" style="background: #f97316;">500</div><button class="btn-detail btnAksiTrans" onclick="bukaModalUtama(500, 'KOIN')">Isi Detail</button><div class="qi-val" id="val-koin-500">0 Keping</div></div>
+                        <div class="qi-row"><div class="qi-badge" style="background: #ea580c;">200</div><button class="btn-detail btnAksiTrans" onclick="bukaModalUtama(200, 'KOIN')">Isi Detail</button><div class="qi-val" id="val-koin-200">0 Keping</div></div>
+                        <div class="qi-row"><div class="qi-badge" style="background: #c2410c;">100</div><button class="btn-detail btnAksiTrans" onclick="bukaModalUtama(100, 'KOIN')">Isi Detail</button><div class="qi-val" id="val-koin-100">0 Keping</div></div>
+                        <div class="qi-row"><div class="qi-badge" style="background: #7c2d12;">50</div><button class="btn-detail btnAksiTrans" onclick="bukaModalUtama(50, 'KOIN')">Isi Detail</button><div class="qi-val" id="val-koin-50">0 Keping</div></div>
+                    </div>
+                </div>
+
+                <div class="card" style="width: 100%; border-top: 3px solid #64748b;">
+                    <h2>📋 Riwayat Transaksi (Bank Ini)</h2>
+                    <div class="table-wrapper" style="max-height: 400px;">
+                        <table>
+                            <thead><tr><th>WAKTU</th><th>USER (KASIR)</th><th>TIPE</th><th>DENOM</th><th>EMISI & KAT</th><th class="text-right">JML</th><th>AKSI</th></tr></thead>
+                            <tbody id="bodyHistoryKhasanah"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 2. TAB SALDO KHASANAH -->
+            <div id="tab-khasanah-saldo" class="section active">
+                <div id="bannerStatusBankKhasanah" style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;"></div>
+                <div id="notifKroscekKhasanah"></div>
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                        <div><h2 style="margin:0; border:none;">📊 Rekap Saldo Khasanah Saat Ini</h2></div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button id="btnAksiKirimKroscek" class="btn-success" onclick="app.kirimKeKroscekKhasanah()">✅ Kirim ke Antrean Kroscek</button>
+                            <button id="btnViewLembarKhasanah" class="btn-info" onclick="app.ubahViewSaldoKhasanah('lembar')">Tampil Lembar</button>
+                            <button id="btnViewNominalKhasanah" class="btn-primary" style="background:#64748b;" onclick="app.ubahViewSaldoKhasanah('nominal')">Tampil Nominal</button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper" style="max-height: 55vh;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th class="col-denom" style="width:80px; z-index: 20;">DENOM</th>
+                                    <th class="col-emisi" style="width:80px; z-index: 20;">EMISI</th>
+                                    <th>GRESS BI</th><th>FIT ATM</th><th>ULE</th><th>UTLE</th>
+                                    <th>MINOR</th><th>MAYOR</th><th>U. LAMA</th><th>UNSORTED</th>
+                                    <th style="background:#e0e7ff; z-index: 10;">TOTAL</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bodySaldoKhasanah"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. TAB KROSCEK SALDO -->
+            <div id="tab-khasanah-kroscek" class="section">
+                <div id="summary-kroscek-khasanah" style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;"></div>
+
+                <div class="card" style="background:#f8fafc; border-top: 4px solid var(--primary);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <h2 style="margin:0; border:none; color: var(--primary);">✅ Kroscek Fisik (H+1 vs Khasanah)</h2>
+                            <div style="margin-top: 10px; display: flex; align-items: center; gap: 15px; background: white; padding: 10px; border-radius: 6px; border: 1px solid var(--border);">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <label style="margin:0; font-size: 12px; font-weight: bold; color: var(--dark);">MODE KROSCEK:</label>
+                                    <select id="kroscekModeKhasanah" onchange="app.gantiModeKroscekKhasanah()" style="padding: 6px 12px; border-radius: 4px; border: 1px solid var(--primary); font-weight: bold; cursor: pointer;">
+                                        <option value="manual">🧑‍💻 MANUAL</option>
+                                        <option value="otomatis">⚙️ OTOMATIS (Upload H+1)</option>
+                                    </select>
+                                </div>
+                                <div id="uploadH1ContainerKhasanah" style="display: none; align-items: center; gap: 10px; border-left: 2px solid var(--border); padding-left: 15px;">
+                                    <button id="btnAksiUploadH1" class="btn-info" onclick="document.getElementById('uploadExcelH1Khasanah').click()" style="padding: 6px 12px;">📁 Pilih File Data H+1</button>
+                                    <input type="file" id="uploadExcelH1Khasanah" accept=".xlsx, .xls, .csv" style="display: none;" onchange="app.prosesUploadH1Khasanah(event)">
+                                    <span id="labelFileH1Khasanah" style="font-size: 11px; color: #64748b; font-weight: 600;">Belum ada file diunggah.</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
+                            <label style="font-size: 11px; font-weight: bold; color: #ef4444; margin: 0;">PILIH BANK KROSCEK:</label>
+                            <select id="pilihBankKroscekKhasanah" onchange="app.renderKroscekKhasanah()" style="padding: 8px 15px; border-radius: 6px; border: 2px solid #ef4444; color: #ef4444; font-weight: bold; outline: none; cursor: pointer; min-width: 180px;">
+                                <option value="">-- Kosong --</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="infoStatusKroscekKhasanah" style="margin-bottom: 15px;"></div>
+                    
+                    <div id="kroscekToggleGroupKhasanah" style="display: none; justify-content: flex-start; align-items: center; gap: 10px; padding: 12px; background: #e0e7ff; border: 1px solid #c7d2fe; border-radius: 8px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <span style="font-weight: bold; color: #1e40af; font-size: 13px; margin-right: 5px;">Tampilan Tabel:</span>
+                        <button id="btnViewKroscek1Khasanah" class="btn-info" style="background:#3b82f6;" onclick="app.ubahViewKroscekKhasanah('tabel1')">1. Antrean Kroscek Global</button>
+                        <button id="btnViewKroscek2Khasanah" class="btn-primary" style="background:#64748b;" onclick="app.ubahViewKroscekKhasanah('tabel2')">2. Analisis Detail Selisih</button>
+                        <button id="btnViewKroscek3Khasanah" class="btn-primary" style="background:#64748b;" onclick="app.ubahViewKroscekKhasanah('tabel3')">3. Referensi Data H+1</button>
+                    </div>
+
+                    <!-- TABEL 1 -->
+                    <div id="wadahTabelAntreanKhasanah">
+                        <h3 style="margin-bottom: 10px; font-size: 14px; color: var(--dark);">Tabel 1: Antrean Kroscek Fisik (Global per Denom)</h3>
+                        <div class="table-wrapper" style="max-height: 45vh;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th class="col-denom" style="width:80px; z-index: 20;">DENOM</th>
+                                        <th class="col-emisi" style="width:80px; z-index: 20;">EMISI</th>
+                                        <th>GRESS BI</th><th>FIT ATM</th><th>ULE</th><th>UTLE</th>
+                                        <th>MINOR</th><th>MAYOR</th><th>U. LAMA</th><th>UNSORTED</th>
+                                        <th>TOT. EMISI (LBR)</th>
+                                        <th style="background:#dbeafe; color:#1e40af;">TOT. NOMINAL</th>
+                                        <th style="background: #e0e7ff; color: #1e40af; width: 120px; border-left: 2px solid #cbd5e1;">INPUT SELISIH (LBR)</th>
+                                        <th style="width: 220px; background: #e2e8f0;">KETERANGAN SELISIH</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bodyKroscekKhasanah"></tbody>
+                                <tfoot id="footKroscekKhasanah"></tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- TABEL 2 -->
+                    <div id="wadahTabelDetailKhasanah" style="display: none;">
+                        <h3 style="margin-bottom: 10px; font-size: 14px; color: var(--primary);">Tabel 2: Analisis Detail Selisih Fisik (Khasanah vs H+1)</h3>
+                        <div class="table-wrapper" style="max-height: 45vh;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th class="col-denom" style="width:80px; z-index: 20; background: var(--primary); color: white;">DENOM</th>
+                                        <th class="col-emisi" style="width:80px; z-index: 20; background: var(--primary); color: white;">EMISI</th>
+                                        <th>GRESS BI</th><th>FIT ATM</th><th>ULE</th><th>UTLE</th>
+                                        <th>MINOR</th><th>MAYOR</th><th>U. LAMA</th><th>UNSORTED</th>
+                                        <th style="background: #e2e8f0; font-weight: bold; color: #1e40af;">TOT. SELISIH</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bodyKroscekDetailKhasanah"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- TABEL 3 -->
+                    <div id="wadahTabelH1Khasanah" style="display: none;">
+                        <h3 style="margin-bottom: 10px; font-size: 14px; color: var(--secondary);">Tabel 3: Referensi Data H+1 (File Unggahan)</h3>
+                        <div class="table-wrapper" style="max-height: 45vh;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th class="col-denom" style="z-index: 20;">DENOM</th>
+                                        <th class="col-emisi" style="z-index: 20;">EMISI</th>
+                                        <th>GRESS BI</th><th>FIT ATM</th><th>ULE</th><th>UTLE</th>
+                                        <th>MINOR</th><th>MAYOR</th><th>U. LAMA</th><th>UNSORTED</th>
+                                        <th style="background:#e0e7ff; z-index: 10;">TOT. H+1 (LBR)</th>
+                                        <th style="background:#dbeafe; color:#1e40af;">TOT. NOMINAL</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bodyKroscekH1Khasanah"></tbody>
+                                <tfoot id="footKroscekH1Khasanah"></tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; text-align: right; display: flex; justify-content: flex-end; gap: 10px;">
+                        <button id="btnAksiKirimRevisi" class="btn-warning" style="width: auto; font-weight: bold; color: white;" onclick="app.kirimRevisiKroscekKhasanah()">⚠️ Kirim Hasil Kroscek (Ada Selisih)</button>
+                        <button id="btnAksiSelesaiKroscek" class="btn-success" style="width: auto; background: var(--secondary); font-size: 14px; padding: 10px 20px;" onclick="app.selesaiKroscekKhasanah()">✅ KROSCEK SELESAI (Balance)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. TAB LAPORAN & CETAK -->
+            <div id="tab-khasanah-laporan" class="section">
+                <div class="card" style="display: flex; justify-content: space-between; align-items: center; background: #e0e7ff; border-color: #c7d2fe; flex-wrap: wrap; gap: 10px;">
+                    <div><h2 style="margin:0; border:none; color: #1e40af;">🖨️ Cetak / Export Laporan Bank</h2></div>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="btnViewCetakLembarKhasanah" class="btn-info" style="background:#3b82f6;" onclick="app.ubahViewCetakKhasanah('lembar')">Tampil Lembar / Keping</button>
+                        <button id="btnViewCetakNominalKhasanah" class="btn-primary" style="background:#64748b;" onclick="app.ubahViewCetakKhasanah('nominal')">Tampil Nominal (Rp)</button>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-success" onclick="app.unduhExcelKhasanah()">📊 Export Excel</button>
+                        <button id="btnCetakJpgKhasanah" class="btn-primary" style="background: #4f46e5;" onclick="app.unduhJpgKhasanah()">📷 Download (JPG)</button>
+                    </div>
+                </div>
+                <div style="overflow-x: auto; background: #94a3b8; padding: 20px; border-radius: 8px;">
+                    <div id="cetak-area-khasanah">
+                        <div class="header-title">Perincian Uang BANK <span id="cetakBankKhasanah"></span> Dalam Kasanah PT. Advantage.SCM</div>
+                        <div class="sub-title">Pada Tanggal : <span id="cetakTglKhasanah"></span></div>
+                        
+                        <div id="wadahCetakLembar">
+                            <div class="table-title">Tabel Rincian Berdasarkan Jumlah LEMBAR / KEPING</div>
+                            <table class="report-table" style="width:100%; border-collapse: collapse; text-align: right;">
+                                <thead style="text-align: center;"><tr><th>DENOM</th><th>TAHUN EMISI</th><th>GRESS BI</th><th>FIT ATM</th><th>ULE</th><th>UTLE</th><th>MINOR</th><th>MAYOR</th><th>U. LAMA</th><th>UNSORTED</th><th style="background:#cbd5e1;">TOTAL</th></tr></thead>
+                                <tbody id="cetakLembarBodyKhasanah"></tbody>
+                            </table>
+                        </div>
+
+                        <div id="wadahCetakNominal" style="display: none;">
+                            <div class="table-title">Tabel Rincian Berdasarkan Total NOMINAL (Rupiah)</div>
+                            <table class="report-table" style="width:100%; border-collapse: collapse; text-align: right;">
+                                <thead style="text-align: center;"><tr><th>DENOM</th><th>TAHUN EMISI</th><th>GRESS BI</th><th>FIT ATM</th><th>ULE</th><th>UTLE</th><th>MINOR</th><th>MAYOR</th><th>U. LAMA</th><th>UNSORTED</th><th style="background:#cbd5e1;">TOTAL NOMINAL</th></tr></thead>
+                                <tbody id="cetakNominalBodyKhasanah"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> 
+
+    <div id="detail-modal-utama" class="modal-overlay">
+        <div class="modal-content" style="width: 750px; max-width: 95%;">
+            <div class="modal-header">
+                <div class="modal-title" id="modal-title-utama">UANG KERTAS 100K</div>
+                <button class="btn-close" onclick="tutupModalUtama()">×</button>
+            </div>
+            <div class="modal-labels">
+                <div style="width:100px; text-align:center;">LEMBAR/KEP</div>
+                <div style="flex-grow:1; text-align:center;">JENIS TRX</div>
+                <div style="flex-grow:1; text-align:center;">KONDISI</div>
+                <div style="flex-grow:1; text-align:center;">EMISI</div>
+                <div style="width:32px;"></div>
+            </div>
+            <div id="modal-rows-container-utama"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal" onclick="tambahBarisModalUtama(0, 'IN', 'gress_bi', '2022')">Tambah Baris</button>
+                <button type="button" class="btn-modal" onclick="simpanModalUtama()">Simpan Data</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="khasanah utama.js"></script>
+</body>
+</html>
