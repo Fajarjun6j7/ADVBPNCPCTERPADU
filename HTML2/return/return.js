@@ -57,7 +57,8 @@ const app = {
         // Jika tidak punya akses sama sekali
         if (!canView) {
             Swal.fire("Akses Ditolak!", "Anda tidak memiliki hak akses untuk Modul Retur ATM.", "error").then(() => {
-                window.location.href = '../portal/index.html';
+                // PERBAIKAN: Rute sweetalert diarahkan ke root Vercel (/index.html)
+                window.location.href = '/index.html';
             });
             return;
         }

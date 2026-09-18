@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sistem Terpadu CPC - Portal</title>
     
-    <!-- Panggil CSS Global dan Firebase -->
-    <link rel="stylesheet" href="../shared/global.css">
-    <link rel="stylesheet" href="portal.css">
+    <!-- PERBAIKAN: Path disesuaikan agar berjalan dari root -->
+    <link rel="stylesheet" href="./shared/global.css">
+    <link rel="stylesheet" href="./portal/portal.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -16,7 +16,8 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function() { emailjs.init("JxhXIuZxsKpbB7Ch4"); })(); </script>
 
-    <script src="../shared/firebase-config.js"></script>
+    <!-- PERBAIKAN: Path ke firebase-config disesuaikan -->
+    <script src="./shared/firebase-config.js"></script>
 </head>
 <body>
 
@@ -64,22 +65,23 @@
                 <h2 style="text-align: left; font-size: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-top: 10px; color: var(--dark);">Pilih Modul Aplikasi</h2>
                 
                 <div class="menu-grid">
-                    <div class="menu-card" onclick="window.location.href='../pusat/pusat.html'">
+                    <!-- PERBAIKAN: Spasi pada rute file telah diubah menjadi dash/strip (-) -->
+                    <div class="menu-card" onclick="window.location.href='./pusat/pusat.html'">
                         <div style="margin-bottom: 10px;"><div class="menu-icon">🗄️</div><h3>Data Pusat</h3><p>Manajemen Master Data.</p></div><div class="menu-btn">Buka Data Pusat</div>
                     </div>
-                    <div class="menu-card" onclick="window.location.href='../roster/roster.html'">
+                    <div class="menu-card" onclick="window.location.href='./roster/roster.html'">
                         <div style="margin-bottom: 10px;"><div class="menu-icon">📅</div><h3>Inputer Roster</h3><p>Pengelolaan jadwal shift dan cuti.</p></div><div class="menu-btn" style="background: var(--primary);">Buka Roster Shift</div>
                     </div>
-                    <div class="menu-card" onclick="window.location.href='../return/return.html'">
+                    <div class="menu-card" onclick="window.location.href='./return/return.html'">
                         <div style="margin-bottom: 10px;"><div class="menu-icon">💵</div><h3>Inputer Return</h3><p>Form operasional harian retur ATM.</p></div><div class="menu-btn" style="background: #f59e0b;">Buka Retur ATM</div>
                     </div>
-                    <div class="menu-card" onclick="window.location.href='../kas/kas.html'">
+                    <div class="menu-card" onclick="window.location.href='./kas/kas.html'">
                         <div style="margin-bottom: 10px;"><div class="menu-icon">💰</div><h3>Modul Kas & Iuran</h3><p>Manajemen buku kas dan ceklis.</p></div><div class="menu-btn" style="background: #10b981;">Buka Modul KAS</div> 
                     </div>
-                    <div class="menu-card" onclick="window.location.href='../khasanah utama/khasanah utama.html'">
+                    <div class="menu-card" onclick="window.location.href='./khasanah-utama/khasanah-utama.html'">
                         <div style="margin-bottom: 10px;"><div class="menu-icon">🏦</div><h3>Modul Khasanah Utama</h3><p>Manajemen Saldo Emisi & Fisik.</p></div><div class="menu-btn" style="background: #3b82f6;">Buka Khasanah Utama</div>
                     </div>
-                   <div class="menu-card" onclick="window.location.href='../khasanah bca/khasanah bca.html'">
+                   <div class="menu-card" onclick="window.location.href='./khasanah-bca/khasanah-bca.html'">
                         <div style="margin-bottom: 10px;"><div class="menu-icon">🏦</div><h3>Khasanah BCA</h3><p>Input & Closing BCA.</p></div><div class="menu-btn" style="background: #0ea5e9;">Buka Khasanah BCA</div>
                   </div>
                 </div>
@@ -87,7 +89,7 @@
         </div>
     </div>
 
-    <!-- Panggil Logika Javascript Portal -->
-    <script src="portal.js"></script>
+    <!-- PERBAIKAN: Arahkan ke folder portal -->
+    <script src="./portal/portal.js"></script>
 </body>
 </html>

@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sistem Terpadu CPC - Khasanah BCA</title>
     
-    <link rel="stylesheet" href="khasanah bca.css">
+    <!-- PERBAIKAN: Spasi pada pemanggilan CSS diubah menjadi strip/dash -->
+    <link rel="stylesheet" href="khasanah-bca.css">
     
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -33,7 +34,9 @@
             </div>
 
             <div class="nav-divider">Navigasi Utama</div>
-            <a class="nav-link" style="background-color: #1e293b; color: white; margin: 0 15px 10px; border-radius: 6px; text-align: center; padding: 8px;" onclick="window.location.href='../portal/index.html'">⬅️ Kembali ke Portal</a>
+            <!-- PERBAIKAN: Rute kembali ke portal diarahkan ke root Vercel (/index.html) -->
+            <a class="nav-link" style="background-color: #1e293b; color: white; margin: 0 15px 10px; border-radius: 6px; text-align: center; padding: 8px;" onclick="window.location.href='/index.html'">⬅️ Kembali ke Portal</a>
+            
             <div class="nav-divider">Inputan BCA</div>
             <a class="nav-link active" id="btn-fisik-prosesan" onclick="openTabBCA('fisik-prosesan')">📁 Fisik Prosesan</a>
             <a class="nav-link" id="btn-pending-sortir" onclick="openTabBCA('pending-sortir')">📁 Pending Unsortir</a>
@@ -89,6 +92,7 @@
         </div>
     </div>
 
-    <script src="khasanah bca.js"></script>
+    <!-- PERBAIKAN: Spasi pada pemanggilan JS diubah menjadi strip/dash -->
+    <script src="khasanah-bca.js"></script>
 </body>
 </html>

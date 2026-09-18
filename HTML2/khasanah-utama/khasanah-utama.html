@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sistem Terpadu CPC - Khasanah Utama</title>
-    <link rel="stylesheet" href="khasanah utama.css">
+    <!-- PERBAIKAN: Spasi pada pemanggilan CSS diubah menjadi strip/dash -->
+    <link rel="stylesheet" href="khasanah-utama.css">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -30,7 +32,8 @@
             </div>
 
             <div class="nav-divider">Navigasi Utama</div>
-            <a class="nav-link" style="background-color: #1e293b; color: white; margin: 0 15px 10px; border-radius: 6px; text-align: center; padding: 8px;" onclick="window.location.href='../portal/index.html'">⬅️ Kembali ke Portal</a>
+            <!-- PERBAIKAN: Rute kembali ke portal diarahkan ke root Vercel (/index.html) -->
+            <a class="nav-link" style="background-color: #1e293b; color: white; margin: 0 15px 10px; border-radius: 6px; text-align: center; padding: 8px;" onclick="window.location.href='/index.html'">⬅️ Kembali ke Portal</a>
             <div class="bank-selector" style="padding: 0 15px 15px; border-bottom: 1px solid #1e293b; margin-bottom: 15px;">
                 <label style="color: #94a3b8; font-size: 11px; font-weight: 600; display: block; margin-bottom: 5px;">PILIH BANK KLIEN</label>
                 <select id="pilihBankKhasanah" onchange="app.gantiBankKhasanah()" style="width: 100%; padding: 8px; border-radius: 6px; background: white; color: var(--dark); font-weight: bold; border: none; outline: none; cursor: pointer;">
@@ -306,6 +309,7 @@
         </div>
     </div>
 
-    <script src="khasanah utama.js"></script>
+    <!-- PERBAIKAN: Spasi pada pemanggilan JS diubah menjadi strip/dash -->
+    <script src="khasanah-utama.js"></script>
 </body>
 </html>

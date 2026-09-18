@@ -28,7 +28,8 @@ const AuthHelper = {
         const user = this.getUserSession(); 
         if (!user) { 
             alert('Silakan login terlebih dahulu!'); 
-            window.location.href = '../portal/index.html'; 
+            // PERBAIKAN: Arahkan langsung ke root Vercel
+            window.location.href = '/index.html'; 
         } 
         return user; 
     },
@@ -58,7 +59,8 @@ const AuthHelper = {
 
     logout: function() { 
         localStorage.removeItem('cpc_user'); 
-        window.location.href = '../portal/index.html'; 
+        // PERBAIKAN: Arahkan langsung ke root Vercel
+        window.location.href = '/index.html'; 
     }
 };
 

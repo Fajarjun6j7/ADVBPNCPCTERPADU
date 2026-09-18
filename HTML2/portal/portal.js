@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// FUNGSI UTAMA: Menyembunyikan Kartu Modul di Portal Sesuai Izin (SUDAH DIPERBAIKI)
+// FUNGSI UTAMA: Menyembunyikan Kartu Modul di Portal Sesuai Izin
 function terapkanUIAkses(user) {
     if(!user) return;
     let isSuper = user.role === 'SUPERADMIN' || user.role === 'SUPER_ADMIN'; 
@@ -52,15 +52,15 @@ function terapkanUIAkses(user) {
         return uAkses.aksesList && uAkses.aksesList.includes(kode);
     };
 
-    // Temukan Elemen Kartu (Selector Khasanah dibuat lebih spesifik)
+    // PERBAIKAN: Selector disesuaikan dengan onclick baru (menggunakan dash)
     const cardPusat = document.querySelector('.menu-card[onclick*="pusat.html"]');
     const cardRoster = document.querySelector('.menu-card[onclick*="roster.html"]');
     const cardRetur = document.querySelector('.menu-card[onclick*="return.html"]');
     const cardKas = document.querySelector('.menu-card[onclick*="kas.html"]');
-    const cardKhasanah = document.querySelector('.menu-card[onclick*="khasanah utama"]');
-    const cardBca = document.querySelector('.menu-card[onclick*="khasanah bca"]');
+    const cardKhasanah = document.querySelector('.menu-card[onclick*="khasanah-utama"]');
+    const cardBca = document.querySelector('.menu-card[onclick*="khasanah-bca"]');
 
-    // Terapkan Aturan Penyembunyian (Telah disesuaikan dengan value di pusat.html)
+    // Terapkan Aturan Penyembunyian
     let isPusatSess = isSuper || sessSlot === parseInt(pMap.pusat || 1); 
     let hasPusatAccess = isSuper || ['pusat_dashboard', 'pusat_karyawan', 'pusat_bukankaryawan', 'pusat_cuti', 'pusat_shift', 'pusat_bank', 'pusat_atm', 'pusat_akses'].some(x => cekAkses(x));
     if(cardPusat) cardPusat.style.display = (hasPusatAccess && isPusatSess) ? 'flex' : 'none';

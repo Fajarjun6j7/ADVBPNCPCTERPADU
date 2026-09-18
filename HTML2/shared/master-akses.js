@@ -6,7 +6,7 @@
 const MASTER_HAK_AKSES = [
     {
         modulId: "pusat",
-        namaModul: "✨ DATA PUSAT",
+        namaModul: "🗄️ DATA PUSAT",
         warna: "#8b5cf6",
         akses: [
             { kode: "pusat_dashboard", label: "Dasbor & Setting Admin" },
@@ -35,7 +35,7 @@ const MASTER_HAK_AKSES = [
     },
     {
         modulId: "return",
-        namaModul: "📦 RETUR ATM",
+        namaModul: "💵 RETUR ATM",
         warna: "#f59e0b",
         akses: [
             { kode: "return_view", label: "Lihat Daftar Retur" },

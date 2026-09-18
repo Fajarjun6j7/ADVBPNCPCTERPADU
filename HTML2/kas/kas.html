@@ -24,7 +24,8 @@
         <div class="sidebar">
             <div class="brand">💰 MODUL KAS CPC</div>
             <div class="nav-divider">Navigasi Utama</div>
-            <a class="nav-link" style="background-color: #1e293b; color: white; margin: 0 15px 10px; border-radius: 6px; text-align: center; padding: 8px;" onclick="window.location.href='../portal/index.html'">⬅️ Kembali ke Portal</a>
+            <!-- PERBAIKAN: Rute kembali ke portal diarahkan ke root Vercel (/index.html) -->
+            <a class="nav-link" style="background-color: #1e293b; color: white; margin: 0 15px 10px; border-radius: 6px; text-align: center; padding: 8px;" onclick="window.location.href='/index.html'">⬅️ Kembali ke Portal</a>
             <div class="nav-divider" id="div-kas-operasional">Operasional Kas</div>
             <a class="nav-link active" id="nav-kas-buku" onclick="app.switchTabKas('buku-kas', this)">📊 Buku Kas & Transaksi</a>
             <a class="nav-link" id="nav-kas-ceklis" onclick="app.switchTabKas('master-iuran', this)">📋 Ceklis Penarikan</a>

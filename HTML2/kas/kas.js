@@ -159,7 +159,8 @@ const app = {
         
         if (!isSuper && !this.cekValidasiAkses('kas_view') && !this.cekValidasiAkses('kas_edit') && !this.cekValidasiAkses('kas_ceklis_view') && !this.cekValidasiAkses('kas_input')) {
             Swal.fire("Akses Ditolak!", "Anda tidak memiliki hak akses untuk Modul Buku Kas.", "error").then(() => {
-                window.location.href = '../portal/index.html';
+                // PERBAIKAN: Rute sweetalert diarahkan ke root Vercel (/index.html)
+                window.location.href = '/index.html';
             });
             return;
         }

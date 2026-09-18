@@ -22,7 +22,8 @@
         <div class="sidebar">
             <div class="brand">💵 MODUL RETUR ATM</div>
             <div class="nav-divider">Navigasi Utama</div>
-            <a class="nav-link" style="background-color: #1e293b; color: white; margin: 0 15px 10px; border-radius: 6px; text-align: center; padding: 8px;" onclick="window.location.href='../portal/index.html'">⬅️ Kembali ke Portal</a>
+            <!-- PERBAIKAN: Rute kembali ke portal diarahkan ke root Vercel (/index.html) -->
+            <a class="nav-link" style="background-color: #1e293b; color: white; margin: 0 15px 10px; border-radius: 6px; text-align: center; padding: 8px;" onclick="window.location.href='/index.html'">⬅️ Kembali ke Portal</a>
             <div class="nav-divider">Menu Operasional</div>
             <a class="nav-link active" id="nav-retur-input" onclick="app.switchMenuRetur('menu-retur-input', this)">📝 Input Retur Baru</a>
             <a class="nav-link" id="nav-retur-daftar" onclick="app.switchMenuRetur('menu-retur-daftar', this)">📁 Daftar Retur Tersimpan</a>
