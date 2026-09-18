@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistem Terpadu CPC - Retur ATM</title>
+    
+    <link rel="stylesheet" href="../shared/global.css">
+    <link rel="stylesheet" href="return.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- WAJIB: Memanggil AuthHelper, Master Akses, dan Config Firebase -->
+    <script src="../shared/firebase-config.js"></script>
+    <script src="../shared/master-akses.js"></script>
+</head>
+<body>
+
+    <div id="retur-module" class="module-container active-desktop" style="display: flex;">
+        <div class="sidebar">
+            <div class="brand">💵 MODUL RETUR ATM</div>
+            <div class="nav-divider">Navigasi Utama</div>
+            <a class="nav-link" style="background-color: #1e293b; color: white; margin: 0 15px 10px; border-radius: 6px; text-align: center; padding: 8px;" onclick="window.location.href='../portal/index.html'">⬅️ Kembali ke Portal</a>
+            <div class="nav-divider">Menu Operasional</div>
+            <a class="nav-link active" id="nav-retur-input" onclick="app.switchMenuRetur('menu-retur-input', this)">📝 Input Retur Baru</a>
+            <a class="nav-link" id="nav-retur-daftar" onclick="app.switchMenuRetur('menu-retur-daftar', this)">📁 Daftar Retur Tersimpan</a>
+        </div>
+        
+        <div class="main-content">
+            <!-- TOPBAR HEADER -->
+            <div class="card" style="display: flex; align-items: center; padding: 12px 20px; margin-bottom: 20px; gap: 15px;">
+                <button class="btn-toggle-sidebar" onclick="document.querySelector('#retur-module .sidebar').classList.toggle('collapsed'); document.querySelector('#retur-module .main-content').classList.toggle('expanded');">☰</button>
+                <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: #1e293b; text-transform: uppercase;">MODUL AKTIF: <span id="topbar-title" style="color: #3b82f6;">INPUT RETUR BARU</span></h3>
+            </div>
+
+            <div id="menu-retur-input" class="section active">
+                <div class="card" id="headerReturnForm">
+                    <h2><span id="judulFormInput">📝 Form Input Retur ATM</span></h2>
+                    
+                    <div class="flex-row" style="align-items: start; margin-bottom: 12px;">
+                        <div class="form-group flex-1">
+                            <label>No Meja</label>
+                            <input type="text" id="returNoMeja" placeholder="Contoh: M-01" autocomplete="off">
+                        </div>
+                        <div class="form-group flex-1" style="position: relative;">
+                            <label style="color: #ef4444;">WS ID ATM *</label>
+                            <input type="text" id="returWsid" placeholder="Ketik WS ID..." oninput="app.cariWsidRetur()" autocomplete="off">
+                            <div id="autocomplete-list" style="display:none; position: absolute; top: 100%; left: 0; right: 0; z-index: 99; background: white; border: 1px solid var(--border); border-radius: 6px; max-height: 150px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Bank Klien</label>
+                            <input type="text" id="returBank" readonly placeholder="Otomatis">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Tanggal</label>
+                            <input type="date" id="returTanggal" readonly>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Jam Mulai</label>
+                            <input type="time" id="returJamMulai" readonly>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Jam Selesai</label>
+                            <input type="time" id="returJamSelesai" readonly placeholder="Terekam Otomatis">
+                        </div>
+                    </div>
+                    
+                    <div class="flex-row" style="align-items: start; margin-bottom: 12px;">
+                        <div class="form-group flex-2">
+                            <label>Nama / Lokasi ATM</label>
+                            <input type="text" id="returLokasi" readonly placeholder="Otomatis" style="width: 100%;">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label style="color: #3b82f6;">Merk / Tipe ATM</label>
+                            <input type="text" id="returMerkAtm" readonly placeholder="Menunggu Update">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Denominasi Uang</label>
+                            <input type="text" id="returDenom" readonly placeholder="Otomatis">
+                        </div>
+                    </div>
+
+                    <div class="flex-row" style="align-items: start; background: #f1f5f9; padding: 12px; border-radius: 8px;">
+                        <div class="form-group flex-1" style="margin-bottom:0;">
+                            <label>ID Karyawan</label>
+                            <input type="text" id="returIdKaryawan" readonly>
+                        </div>
+                        <div class="form-group flex-2" style="margin-bottom:0;">
+                            <label>Nama Karyawan (Kasir)</label>
+                            <input type="text" id="returNamaKaryawan" readonly>
+                        </div>
+                    </div>
+
+                    <div class="flex-row" style="margin-top: 15px;"><button class="btn-primary" id="btnKunciHeader" onclick="app.kunciHeaderRetur()">⬇️ Lanjut ke Tabel Rincian</button><button class="btn-danger" id="btnBatalRevisiRetur" style="display: none;" onclick="app.batalRevisiRetur()">❌ Batal Revisi</button></div>
+                </div>
+                <div class="card" id="areaTabelRetur" style="display: none; border-top: 4px solid var(--secondary);">
+                    <h2>📊 Tabel Rincian Pecahan Uang Fisik</h2>
+                    <div class="table-wrapper"><table><thead><tr style="background-color: #f8fafc;"><th>ASAL UANG</th><th>100.000</th><th>75.000</th><th>50.000</th><th>20.000</th><th>10.000</th><th>5.000</th><th>2.000</th><th>1.000</th><th style="background-color: #e0e7ff;">TOTAL NOMINAL</th></tr></thead><tbody id="bodyRincianUang"></tbody><tfoot><tr style="background-color: #f1f5f9; font-weight: bold;"><td style="text-align: left;">TOTAL LEMBAR</td><td id="tot-lembar-100000">0</td><td id="tot-lembar-75000">0</td><td id="tot-lembar-50000">0</td><td id="tot-lembar-20000">0</td><td id="tot-lembar-10000">0</td><td id="tot-lembar-50000">0</td><td id="tot-lembar-2000">0</td><td id="tot-lembar-1000">0</td><td style="background-color: #e0e7ff;"></td></tr><tr style="background-color: #dbeafe; font-size: 15px;"><td colspan="9" style="text-align: right; font-weight: bold; color: #1e40af;">GRAND TOTAL :</td><td id="grand-total-retur" style="font-weight: 800; color: #1e40af;">Rp 0</td></tr></tfoot></table></div>
+                    <div class="flex-row" style="margin-top: 20px; justify-content: flex-end;"><button class="btn-success" id="btnSimpanRetur" style="width: auto; padding: 10px 30px;" onclick="app.prosesSimpanDenganOtorisasi()">💾 SAVE DATA</button></div>
+                </div>
+            </div>
+            
+            <div id="menu-retur-daftar" class="section">
+                <div class="card">
+                    <h2>📁 Daftar Inputan Return (Tersimpan)</h2>
+                    <div class="flex-row" style="margin-bottom: 15px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
+                        <div class="form-group" style="width: auto;"><label>Filter Tanggal</label><input type="date" id="filterTanggalRetur"></div>
+                        <div class="form-group" style="width: auto;"><label>Pencarian WS ID</label><input type="text" id="filterWsidRetur" placeholder="Ketik WS ID..." oninput="app.renderDaftarRetur()"></div>
+                        <div class="form-group" style="width: auto;"><button class="btn-info" style="background:#3b82f6;" onclick="app.renderDaftarRetur()">🔍 Cari</button></div>
+                        <div class="form-group" style="width: auto;"><button class="btn-danger" onclick="document.getElementById('filterTanggalRetur').value = ''; document.getElementById('filterWsidRetur').value = ''; app.renderDaftarRetur();">🔄 Reset</button></div>
+                    </div>
+                    <div class="table-wrapper"><table><thead><tr><th>NO</th><th>TANGGAL</th><th>NO MEJA</th><th>WSID</th><th>KASIR</th><th>WAKTU SELESAI</th><th>GRAND TOTAL</th><th>AKSI</th></tr></thead><tbody id="bodyDaftarRetur"></tbody></table></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETAIL RETUR -->
+    <div id="modalDetailRetur" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🔍 Detail Laporan Retur ATM</h3>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button class="btn-success" id="btnSimpanJpgRetur" style="padding: 6px 12px; height: auto;" onclick="app.simpanJpgRetur(this)">📷 Simpan JPG</button>
+                    <button class="btn-close" onclick="document.getElementById('modalDetailRetur').style.display = 'none'">&times;</button>
+                </div>
+            </div>
+            <div id="areaCetakJPG" style="padding: 20px; background: white;">
+                
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px;">
+                    <div class="flex-row" style="align-items: start; margin-bottom: 12px;">
+                        <div class="form-group flex-1"><label>No Meja</label><input type="text" id="detNoMeja" readonly></div>
+                        <div class="form-group flex-1"><label style="color: #ef4444;">WS ID ATM *</label><input type="text" id="detWsid" readonly></div>
+                        <div class="form-group flex-1"><label>Bank Klien</label><input type="text" id="detBank" readonly></div>
+                        <div class="form-group flex-1"><label>Tanggal</label><input type="date" id="detTanggal" readonly></div>
+                        <div class="form-group flex-1"><label>Jam Mulai</label><input type="time" id="detJamMulai" readonly></div>
+                        <div class="form-group flex-1"><label>Jam Selesai</label><input type="time" id="detJamSelesai" readonly></div>
+                    </div>
+                    
+                    <div class="flex-row" style="align-items: start; margin-bottom: 12px;">
+                        <div class="form-group flex-2"><label>Nama / Lokasi ATM</label><input type="text" id="detLokasi" readonly style="width: 100%;"></div>
+                        <div class="form-group flex-1"><label style="color: #3b82f6;">Merk / Tipe ATM</label><input type="text" id="detMerk" readonly></div>
+                        <div class="form-group flex-1"><label>Denominasi Uang</label><input type="text" id="detDenom" readonly></div>
+                    </div>
+
+                    <div class="flex-row" style="align-items: start; background: #f1f5f9; padding: 12px; border-radius: 8px;">
+                        <div class="form-group flex-1" style="margin-bottom:0;"><label>ID Karyawan</label><input type="text" id="detIdKaryawan" readonly></div>
+                        <div class="form-group flex-2" style="margin-bottom:0;"><label>Nama Karyawan (Kasir)</label><input type="text" id="detKasir" readonly></div>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr style="background-color: #f8fafc;">
+                                <th>ASAL UANG</th><th>100.000</th><th>75.000</th><th>50.000</th><th>20.000</th><th>10.000</th><th>5.000</th><th>2.000</th><th>1.000</th><th style="background-color: #e0e7ff;">TOTAL NOMINAL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bodyDetailUang"></tbody>
+                        <tfoot>
+                            <tr style="background-color: #f1f5f9; font-weight: bold;">
+                                <td style="text-align: left;">TOTAL LEMBAR</td>
+                                <td id="det-lembar-100000">0</td><td id="det-lembar-75000">0</td><td id="det-lembar-50000">0</td><td id="det-lembar-20000">0</td>
+                                <td id="det-lembar-10000">0</td><td id="det-lembar-5000">0</td><td id="det-lembar-2000">0</td><td id="det-lembar-1000">0</td>
+                                <td style="background-color: #e0e7ff;"></td>
+                            </tr>
+                            <tr style="background-color: #dbeafe; font-size: 15px;">
+                                <td colspan="9" style="text-align: right; font-weight: bold; color: #1e40af;">GRAND TOTAL :</td>
+                                <td id="det-grand-total" style="font-weight: 800; color: #1e40af;">Rp 0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="return.js"></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+/* ==========================================
+   FILE: return/return.css
+   FUNGSI: Desain Layout Modul Retur & Autocomplete
+========================================== */
+.module-container { display: flex; width: 100%; min-height: 100vh; align-items: flex-start; justify-content: flex-start; background: #f1f5f9; position: relative;}
+.sidebar { width: 220px; background-color: var(--sidebar); color: white; padding: 15px 0; display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 100; overflow-y: auto; transition: transform 0.3s ease; }
+.sidebar.collapsed { transform: translateX(-100%); }
+.main-content { margin-left: 220px; padding: 20px; width: calc(100% - 220px); transition: margin-left 0.3s ease, width 0.3s ease; }
+.main-content.expanded { margin-left: 0; width: 100%; padding-top: 20px;}
+
+/* Tombol Toggle Sidebar - Berada di dalam Card Topbar */
+.btn-toggle-sidebar { 
+    background: #0f172a; 
+    color: white; 
+    border: none; 
+    width: 38px;
+    height: 38px;
+    border-radius: 6px; 
+    cursor: pointer; 
+    display: flex; 
+    font-size: 20px; 
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+}
+
+.brand { font-size: 16px; font-weight: 700; text-align: center; padding-bottom: 12px; margin-bottom: 8px; border-bottom: 1px solid #1e293b; color: #e2e8f0; }
+.nav-link { padding: 10px 15px; margin: 4px 15px; border-radius: 6px; color: var(--text-light); text-decoration: none; display: block; font-weight: 500; cursor: pointer; transition: 0.2s; font-size: 13px;}
+.nav-link:hover, .nav-link.active { background-color: #1e293b; color: white; }
+.nav-divider { padding: 10px 20px 4px; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;}
+.section { display: none; animation: fadeIn 0.2s ease; } .section.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+.card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid var(--border); }
+.card.edit-mode { border: 1px solid #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.1); }
+.card h2 { text-align: left; margin-bottom: 15px; color: var(--dark); border-bottom: 1px solid var(--border); padding-bottom: 8px; font-size: 16px; font-weight: 700; }
+.flex-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.flex-1 { flex: 1; } .flex-2 { flex: 2; } .flex-3 { flex: 3; }
+.table-wrapper { overflow-x: auto; max-height: 60vh; border: 1px solid var(--border); border-radius: 6px; background: white;}
+table { width: 100%; border-collapse: separate; border-spacing: 0; white-space: nowrap; font-size: 12px; }
+th, td { border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); padding: 6px 10px; text-align: center; }
+th { background: #f8fafc; font-weight: 600; color: #475569; position: sticky; top: 0; z-index: 10; border-top: 1px solid var(--border); font-size: 11px; text-transform: uppercase; }
+td { color: #334155; }
+
+/* Fitur Autocomplete Pencarian ATM */
+.autocomplete-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--dark); transition: 0.2s; background: white;}
+.autocomplete-item:hover { background-color: #f1f5f9; color: var(--primary); font-weight: 600; }
+.autocomplete-item span { font-size: 10px; color: #64748b; display: block; margin-top: 2px;}
+
+/* Desain Pop-up Modal Cetak */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 999; justify-content: center; align-items: center; padding: 20px; }
+.modal-content { background: white; width: 100%; max-width: 1100px; max-height: 95vh; border-radius: 10px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border-top: 5px solid var(--secondary); }
+.modal-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #f8fafc; position: sticky; top: 0; z-index: 10; }
+.btn-close { background: transparent; color: #ef4444; font-size: 24px; font-weight: bold; border: none; cursor: pointer; padding: 0; height: auto; }
+
+/* --- RESPONSIVE / MOBILE LAYOUT --- */
+@media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); top: 0; height: 100vh; z-index: 105; box-shadow: 2px 0 10px rgba(0,0,0,0.2); } 
+    .sidebar.collapsed { transform: translateX(0); } 
+    .main-content { margin-left: 0; width: 100%; padding: 20px 10px 15px; }
+    .main-content.expanded { padding-top: 20px; }
+    .flex-row { flex-direction: column; align-items: stretch; gap: 10px; }
+    .flex-1, .flex-2, .flex-3, .form-group { width: 100% !important; flex: none !important; }
+    .card { padding: 15px; } .table-wrapper { max-height: 50vh; }
+}
